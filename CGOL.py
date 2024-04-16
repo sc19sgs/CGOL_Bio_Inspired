@@ -1,20 +1,24 @@
 import tkinter as tk
 import numpy as np
-from tkinter import PhotoImage
 from PIL import Image, ImageTk
 
 # Initialise Main Window
 root = tk.Tk()
 root.title("Conway's Game of Life (Predator vs Prey)")
 
+# General UI Theme Presets
+root.configure(bg='light grey')
+frame_style = {'bg': 'light grey'}
+text_style = {'bg': 'light grey', 'font': ('Arial', 18)}
+
 # Canvas Dimensions
-canvas_width = 1400  
-canvas_height = 600 
+canvas_width = 1400
+canvas_height = 600
 cell_size = 28
 
 # Create Canvas with new dimensions
 canvas = tk.Canvas(root, width=canvas_width, height=canvas_height, bg='white')
-canvas.pack()
+canvas.pack(padx=10, pady=10)
 
 # Grid Initialisation
 grid_height = canvas_height // cell_size
@@ -22,34 +26,43 @@ grid_width = canvas_width // cell_size
 grid = np.zeros((grid_height, grid_width), dtype=int)
 
 # Import and Resize Images:
-
-# Mouse (Prey)
 mouse_image_path = "mouse.png"
 mouse_original_image = Image.open(mouse_image_path)
 mouse_resized_image = mouse_original_image.resize((cell_size, cell_size), Image.Resampling.LANCZOS)
 mouse_image = ImageTk.PhotoImage(mouse_resized_image)
 
-# Wolf (Predator)
 wolf_image_path = "wolf.png"
 wolf_original_image = Image.open(wolf_image_path)
 wolf_resized_image = wolf_original_image.resize((cell_size, cell_size), Image.Resampling.LANCZOS)
 wolf_image = ImageTk.PhotoImage(wolf_resized_image)
 
 # Title and Images
-title_frame = tk.Frame(root, bg='blue', height=60)
-title_frame.pack(fill='x', padx=10, pady=10)
+title_frame = tk.Frame(root, **frame_style)
+title_frame.pack(fill='x', padx=10, pady=5)
 
 # Mouse Image and Label
-mouse_label = tk.Label(title_frame, image=mouse_image, bg='grey')
+mouse_label = tk.Label(title_frame, image=mouse_image, **frame_style)
 mouse_label.pack(side='left', padx=10)
 
 # Centred Title Label
-title_label = tk.Label(title_frame, text="Conway's Game of Life", font=('Arial', 16), bg='grey')
-title_label.pack(side='left', expand=True) 
+title_label = tk.Label(title_frame, text="Conway's Game of Life", **text_style)
+title_label.pack(side='left', expand=True)
 
 # Wolf Image and Label
-wolf_label = tk.Label(title_frame, image=wolf_image, bg='grey')
+wolf_label = tk.Label(title_frame, image=wolf_image, **frame_style)
 wolf_label.pack(side='left', padx=10)
+
+# Button Frame
+button_frame = tk.Frame(root, **frame_style)
+button_frame.pack(fill='x', padx=10, pady=5)
+
+# Start Button
+start_button = tk.Button(button_frame, text="Start Game", command=lambda: start_game(), **text_style)
+start_button.pack(side='left', padx=10)
+
+# Reset Button
+reset_button = tk.Button(button_frame, text="Reset Game", command=lambda: reset_game(), **text_style)
+reset_button.pack(side='left', padx=10)
 
 # Flag state to control whether game updates
 is_game_active = False
@@ -132,14 +145,6 @@ def toggle_cell(event):
     draw_grid()
 
 canvas.bind("<Button-1>", toggle_cell)
-
-# Start Button
-start_button = tk.Button(root, text="Start Game", command=start_game)
-start_button.pack()
-
-# Reset Button
-reset_button = tk.Button(root, text="Reset Game", command=reset_game)
-reset_button.pack()
 
 # Running the application
 root.mainloop()
