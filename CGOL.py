@@ -56,9 +56,9 @@ wolf_label.pack(side='left', padx=10)
 button_frame = tk.Frame(root, **frame_style)
 button_frame.pack(fill='x', padx=10, pady=5)
 
-# Start Button
-start_button = tk.Button(button_frame, text="Start Game", command=lambda: start_game(), **text_style)
-start_button.pack(side='left', padx=10)
+# Start/Pause/Resume Button
+game_button = tk.Button(button_frame, text="Start Game", command=lambda: toggle_game(), **text_style)
+game_button.pack(side='left', padx=10)
 
 # Reset Button
 reset_button = tk.Button(button_frame, text="Reset Game", command=lambda: reset_game(), **text_style)
@@ -67,11 +67,13 @@ reset_button.pack(side='left', padx=10)
 # Flag state to control whether game updates
 is_game_active = False
 
-# Function to start the game
-def start_game():
+# Function to toggle game running state
+def toggle_game():
     global is_game_active
-    is_game_active = True
-    update_grid()
+    is_game_active = not is_game_active
+    game_button.config(text="Pause Game" if is_game_active else "Resume Game")
+    if is_game_active:
+        update_grid()
 
 # Function to reset the game
 def reset_game():
@@ -79,12 +81,13 @@ def reset_game():
     is_game_active = False
     grid = np.zeros((grid_height, grid_width), dtype=int)
     draw_grid()
+    game_button.config(text="Start Game")
 
 # Update Function for Game of Life Rules:
 def update_grid():
     global grid
     if not is_game_active:
-        return    
+        return  
     new_grid = np.zeros_like(grid)
     for i in range(grid_height):
         for j in range(grid_width):
@@ -112,8 +115,9 @@ def update_grid():
 
     grid = new_grid
     draw_grid()
-    root.after(100, update_grid)
-
+    if is_game_active:
+        root.after(100, update_grid)
+        
 # Drawing the Grid
 def draw_grid():
     canvas.delete("all")
