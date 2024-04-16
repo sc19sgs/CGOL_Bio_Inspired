@@ -7,7 +7,7 @@ This project implements Conway's Game of Life (CGOL) integrated with Bio-Inspire
 - Interactive grid for placing Mice and Wolves
 - Start, Pause, and Reset the simulation
 - Custom rules that mimic natural predator-prey dynamics, such as:
-    - We need to mention our adaptations here
+    - *We need to mention our adaptations here later
 
 ### Requirements
 - PIL 
