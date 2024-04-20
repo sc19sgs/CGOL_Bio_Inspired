@@ -67,6 +67,26 @@ reset_button.pack(side='left', padx=10)
 # Flag state to control whether game updates
 is_game_active = False
 
+# Checks if the board is overpopulated with wolves
+def calculateOverpopulation():
+    rng = np.random.default_rng(12345)
+
+    wolves_position = []
+    # Search for all the positions of the wolves
+    for i in range(grid_height):
+        for j in range(grid_width):
+            if grid[i][j] == 2:
+                wolves_position.append((i,j))
+
+    # Kill wolves
+    while len(wolves_position) > (grid_height*grid_width)//2:
+        random = rng.integers(low=0, high=len(wolves_position), size=1)[0]
+        x, y = wolves_position[random]
+        wolves_position.pop(random)
+        grid[x][y] = 0
+
+    return
+
 # Function to toggle game running state
 def toggle_game():
     global is_game_active
