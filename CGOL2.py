@@ -3,30 +3,65 @@ import numpy as np
 from PIL import Image, ImageTk
 import random
 
+class GroupOfMice:
+    def __init__(self):
+        self.energy = 50  # Common energy for all mice
+        self.mice = []
+
+    def add_mouse(self, mouse):
+        self.mice.append(mouse)
+    
+    def delete_mouse(self, mouse):
+        if mouse in self.mice:
+            self.mice.remove(mouse)
+
+    def increase_energy(self, amount):
+        self.energy += amount
+
+    def decrease_energy(self, amount=2):
+        self.energy -= amount
+        if self.energy < 0:
+            self.energy = 0
+
+class GroupOfWolves:
+    def __init__(self):
+        self.energy = 80  # Common energy for all wolves
+        self.wolves = []
+
+    def add_wolf(self, wolf):
+        self.wolves.append(wolf)
+
+    def delete_wolf(self, wolf):
+        if wolf in self.wolves:
+            self.wolves.remove(wolf)
+    
+    def increase_energy(self, amount):
+        self.energy += amount
+
+    def decrease_energy(self, amount=2):
+        self.energy -= amount
+        if self.energy < 0:
+            self.energy = 0
+                      
 class Mouse:
     def __init__(self):
         self.type = 1  # Mouse type
-        self.energy = 50
-
-    def decrease_energy(self, amount = 2):
-        self.energy -= amount
-        if self.energy < 0:
-            self.energy = 0
-
+        
 class Wolf:
     def __init__(self):
         self.type = 2  # Wolf type
-        self.energy = 80
-    def decrease_energy(self, amount = 2):
-        self.energy -= amount
-        if self.energy < 0:
-            self.energy = 0
 
 class Cheese:
     def __init__(self):
         self.type = 3  # Cheese type
 
+#Initialize the Cheese count and the groups of mice and wolves.
 cheese_count = 0
+group_of_wolves = GroupOfWolves()
+group_of_mice = GroupOfMice()
+food_value = 10
+birth_energy_loss = 0.2
+
 def place_cheese(num_cheese):
     for _ in range(num_cheese):
         x = random.randint(0, grid_width - 1)
@@ -47,8 +82,8 @@ frame_style = {'bg': 'light grey'}
 text_style = {'bg': 'light grey', 'font': ('Arial', 18)}
 
 # Canvas Dimensions
-canvas_width = 1400
-canvas_height = 600
+canvas_width = 1400 + 200
+canvas_height = 700
 cell_size = 28
 
 # Energy Bar Dimensions
@@ -61,7 +96,7 @@ canvas.pack(padx=10, pady=10)
 
 # Grid Initialisation
 grid_height = canvas_height // cell_size
-grid_width = canvas_width // cell_size
+grid_width = (canvas_width-200) // cell_size
 grid = np.full((grid_height, grid_width), None, dtype=object)
 
 # Import and Resize Images:
@@ -153,7 +188,10 @@ def update_grid():
                 if total in [2, 3]:
                     # Cell survives; if it's a mouse and surrounded by 3 wolves, it becomes a wolf
                     if count_wolves == 3:
-                        new_grid[i][j] = Wolf()  # Mouse is replaced by wolves
+                        wolf = Wolf()
+                        new_grid[i][j] = wolf  # Mouse is replaced by wolves
+                        group_of_wolves.add_wolf(wolf)
+                        group_of_wolves.increase_energy(food_value)
                     else:
                         new_grid[i][j] = grid[i][j]
                 else:
@@ -173,22 +211,51 @@ def update_grid():
                         new_x = random.randint(0, grid_width - 1)
                         new_y = random.randint(0, grid_height - 1)
                     new_grid[new_y][new_x] = Cheese()
-                    new_grid[i][j] = Mouse()  # Mouse eats the cheese
-                    new_grid[i][j].energy = 100
+                    mouse = Mouse()
+                    new_grid[i][j] = mouse # Mouse eats the cheese
+                    group_of_mice.add_mouse(mouse)
+                    group_of_mice.increase_energy(food_value)
+                    
                 else:
                     new_grid[i][j] = Cheese()
             else:
                 # Apply birth rules
                 if count_wolves == 3:
-                    new_grid[i][j] = Wolf()  # Birth of a wolf takes precedence
+                    wolf  = Wolf()
+                    new_grid[i][j] = wolf  # Birth of a wolf takes precedence
+                    group_of_wolves.add_wolf(wolf)
+                    group_of_wolves.decrease_energy(birth_energy_loss)
                 elif count_mice == 3:
-                    new_grid[i][j] = Mouse()  # Birth of a mouse, only if no wolves
+                    mouse = Mouse()
+                    new_grid[i][j] = mouse  # Birth of a mouse, only if no wolves
+                    group_of_mice.add_mouse(mouse)
+                    group_of_mice.decrease_energy(birth_energy_loss)
 
     grid = new_grid
     draw_grid()
     if is_game_active:
         root.after(100, update_grid)
         
+def draw_energy_bars():
+    energy_bar_height = 300
+    
+    # Draw mouse energy bar
+    canvas.create_rectangle(canvas_width - 150, 50, canvas_width-100, 50 + energy_bar_height,
+                            fill='', outline='black')
+    canvas.create_rectangle(canvas_width - 150, 50+ energy_bar_height *(1-group_of_mice.energy/100), canvas_width-100, 50 + energy_bar_height,
+                            fill='green', outline='black')
+    
+    #Draw Wolf energy bar
+    canvas.create_rectangle(canvas_width - 150, 400, canvas_width-100, 400 + energy_bar_height,
+                            fill='', outline='black')
+    canvas.create_rectangle(canvas_width - 150, 400+ energy_bar_height *(1-group_of_wolves.energy/100), canvas_width-100, 400 + energy_bar_height,
+                            fill='red', outline='black')
+    
+
+    
+
+
+    
 
 # Drawing the Grid
 def draw_grid():
@@ -196,22 +263,18 @@ def draw_grid():
     for i in range(grid_height):
         for j in range(grid_width):
             if isinstance(grid[i][j], Mouse):
-                energy = grid[i][j].energy
                 canvas.create_image(j*cell_size, i*cell_size, anchor="nw", image=mouse_image)
-                canvas.create_rectangle(j*cell_size, i*cell_size + energy_bar_height * (1 - energy / 100),
-                                        j*cell_size + energy_bar_width, i*cell_size + energy_bar_height,
-                                        fill='green', outline='black')
-            elif isinstance(grid[i][j], Wolf):
-                energy = grid[i][j].energy
+                
+            elif isinstance(grid[i][j], Wolf):    
                 canvas.create_image(j*cell_size, i*cell_size, anchor="nw", image=wolf_image)
-                canvas.create_rectangle(j*cell_size, i*cell_size + energy_bar_height * (1 - energy / 100),
-                                        j*cell_size + energy_bar_width, i*cell_size + energy_bar_height,
-                                        fill='red', outline='black')
+                
             elif isinstance(grid[i][j], Cheese):  # Draw cheese
                 canvas.create_image(j*cell_size, i*cell_size, anchor="nw", image=cheese_image)
-        canvas.create_line(0, i*cell_size, canvas_width, i*cell_size, fill='gray')  # Draw horizontal grid lines
+        canvas.create_line(0, i*cell_size, canvas_width-200, i*cell_size, fill='gray')  # Draw horizontal grid lines
     for j in range(grid_width + 1):
         canvas.create_line(j*cell_size, 0, j*cell_size, canvas_height, fill='gray')  # Draw vertical grid lines
+
+    draw_energy_bars()
 
 # Cell Placement
 def toggle_cell(event):
@@ -219,15 +282,23 @@ def toggle_cell(event):
     if event.state & 0x0001:  # Check if Shift key is down
         # Shift + Click - Place or replace with wolf
         if not isinstance(grid[y][x], Wolf):
-            grid[y][x] = Wolf()  # Place wolf
+            wolf = Wolf()
+            grid[y][x] = wolf  # Place wolf
+            group_of_wolves.add_wolf(wolf)
         else:
-            grid[y][x] = None  # Clear cell if it's already a wolf
+            if isinstance(grid[y][x], Wolf):
+                group_of_wolves.delete_wolf(grid[y][x])
+            grid[y][x] = None
     else:
         # Normal Click - Place or replace with mouse
         if not isinstance(grid[y][x], Mouse):
-            grid[y][x] = Mouse()
+            mouse = Mouse()
+            grid[y][x] = mouse
+            group_of_mice.add_mouse(mouse)
         else:
-            grid[y][x] = None  # Clear cell if it's already a mouse
+            if isinstance(grid[y][x], Mouse):
+                group_of_mice.delete_mouse(grid[y][x])
+            grid[y][x] = None
         
     draw_grid()
 
