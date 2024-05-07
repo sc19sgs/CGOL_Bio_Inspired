@@ -59,7 +59,47 @@ class GroupOfWolves:
     def reset(self):
         self.wolves = []
         self.dead = 0
-        
+
+class Virus:
+    def __init__(self):
+        # Initialize the position and movement direction of the virus
+        self.position = (random.randint(0, grid_height - 2), random.randint(0, grid_width - 2))
+        self.direction = random.choice([(-1, 0), (1, 0), (0, -1), (0, 1)])  # Initial random direction
+        self.moves_in_current_direction = 0
+        self.max_moves_in_direction = 6  # Increase to have longer movement in one direction
+
+    def move_and_attack(self):
+        # Decide if it's time to change direction
+        if self.moves_in_current_direction >= self.max_moves_in_direction or self.at_edge():
+            self.direction = random.choice([(-1, 0), (1, 0), (0, -1), (0, 1)])
+            self.moves_in_current_direction = 0
+
+        # Calculate new position based on current direction
+        new_x = (self.position[0] + self.direction[0]) % (grid_height - 1)
+        new_y = (self.position[1] + self.direction[1]) % (grid_width - 1)
+        self.position = (new_x, new_y)
+        self.moves_in_current_direction += 1
+        self.attack()
+
+    def at_edge(self):
+        # Check if the virus is at the edge of the grid
+        next_x = self.position[0] + self.direction[0]
+        next_y = self.position[1] + self.direction[1]
+        return not (0 <= next_x < grid_height - 1 and 0 <= next_y < grid_width - 1)
+
+    def attack(self):
+        # Attack the 2x2 block around the current position
+        positions = [(0, 0), (0, 1), (1, 0), (1, 1)]
+        for pos in positions:
+            x, y = self.position[0] + pos[0], self.position[1] + pos[1]
+            if 0 <= x < grid_height and 0 <= y < grid_width:
+                if (self.target_species == 'mouse' and isinstance(grid[x][y], Mouse)) or \
+                   (self.target_species == 'wolf' and isinstance(grid[x][y], Wolf)):
+                    grid[x][y] = None  # Delete the entity as the virus moves over it
+
+
+
+
                       
 class Mouse:
     def __init__(self):
@@ -102,8 +142,8 @@ frame_style = {'bg': 'light grey'}
 text_style = {'bg': 'light grey', 'font': ('Arial', 18)}
 
 # Canvas Dimensions
-canvas_width = 1400 + 200
-canvas_height = 700
+canvas_width = 1400 
+canvas_height = 600
 cell_size = 28
 
 # Energy Bar Dimensions
@@ -134,6 +174,11 @@ cheese_image_path = "cheese.png"
 cheese_original_image = Image.open(cheese_image_path)
 cheese_resized_image = cheese_original_image.resize((cell_size, cell_size), Image.Resampling.LANCZOS)
 cheese_image = ImageTk.PhotoImage(cheese_resized_image)
+
+virus_image_path = "virus.png"
+virus_original_image = Image.open(virus_image_path)
+virus_resized_image = virus_original_image.resize((cell_size, cell_size), Image.Resampling.LANCZOS)
+virus_image = ImageTk.PhotoImage(virus_resized_image)
 
 # Title and Images
 title_frame = tk.Frame(root, **frame_style)
@@ -232,20 +277,37 @@ def reset_game():
     draw_grid()
     game_button.config(text="Start Game")
 
-# Update Function for Game of Life Rules:
+virus = None  # Initial state without a virus
+
+
 def update_grid():
-    global grid
+    global grid, is_game_active, virus
     if not is_game_active:
-        return  
+        return
+
+    # Population checks to possibly spawn or remove the virus
+    total_population = len(group_of_mice.mice) + len(group_of_wolves.wolves)
+    mice_percentage = len(group_of_mice.mice) / total_population if total_population > 0 else 0
+    wolves_percentage = len(group_of_wolves.wolves) / total_population if total_population > 0 else 0
+
+    # Decide if virus should be spawned or removed based on population thresholds
+    if mice_percentage >= 0.7 and (virus is None or virus.target_species != 'mouse'):
+        virus = Virus()
+        virus.target_species = 'mouse'
+    elif wolves_percentage >= 0.7 and (virus is None or virus.target_species != 'wolf'):
+        virus = Virus()
+        virus.target_species = 'wolf'
+    elif virus and mice_percentage < 0.7 and wolves_percentage < 0.7:
+        virus = None
+
     new_grid = np.empty_like(grid, dtype=object)
+
     for i in range(grid_height):
         for j in range(grid_width):
             neighbours = grid[np.ix_([(i-1) % grid_height, i, (i+1) % grid_height], 
                                      [(j-1) % grid_width, j, (j+1) % grid_width])]
-            
             count_mice = np.sum([1 for cell in neighbours.flatten() if isinstance(cell, Mouse)])
             count_wolves = np.sum([1 for cell in neighbours.flatten() if isinstance(cell, Wolf)])
-            
             
             if grid[i][j]!=None:
                     
@@ -300,6 +362,8 @@ def update_grid():
                                 new_grid[i][j] = Cheese()
                     else: 
                         new_grid[i][j] = grid[i][j]
+
+
             else: 
                 if count_wolves == 3:
                     wolf = Wolf()
@@ -310,20 +374,32 @@ def update_grid():
                     mouse = Mouse()
                     new_grid[i][j] = mouse
                     group_of_mice.add_mouse(mouse)
-                    group_of_mice.decrease_energy(birth_energy_loss)      
-                            
-            
+                    group_of_mice.decrease_energy(birth_energy_loss)     
+
+    # If virus exists, move and attack in a 2x2 block
+    if virus:
+        virus_positions = [(virus.position[0] + dx, virus.position[1] + dy) for dx in (0, 1) for dy in (0, 1)]
+        for x, y in virus_positions:
+            if 0 <= x < grid_height and 0 <= y < grid_width:
+                if (virus.target_species == 'mouse' and isinstance(grid[x][y], Mouse)) or \
+                   (virus.target_species == 'wolf' and isinstance(grid[x][y], Wolf)):
+                    new_grid[x][y] = None  # Delete the mouse or wolf as the virus moves over it
+
+        # Move virus to a new random position within the grid bounds
+        # virus.position = (random.randint(0, grid_height - 2), random.randint(0, grid_width - 2))     
+        virus.move_and_attack()                                                        
 
     grid = new_grid
     draw_grid()
-    update_graph()
+    # Commented out graph updates because it was making the process slower and less smooth  
+    # update_graph()
     group_of_wolves.dead = 0
     group_of_mice.dead = 0
     if is_game_active:
         root.after(100, update_grid)
-        
+
 def draw_energy_bars():
-    energy_bar_height = 300
+    energy_bar_height = 200
     
     total_population = len(group_of_mice.mice) + len(group_of_wolves.wolves)
     if total_population > 0:
@@ -333,18 +409,22 @@ def draw_energy_bars():
         mice_percentage = 0
         wolves_percentage = 0
     
-    # Draw mouse energy bar
+    # Draw mouse energy bar with title and image placeholder
+    canvas.create_text(canvas_width - 125, 30, text="Relative Mouse Population", font=('Arial', 16), fill='black')
     canvas.create_rectangle(canvas_width - 150, 50, canvas_width-100, 50 + energy_bar_height,
                             fill='', outline='black')
-    canvas.create_rectangle(canvas_width - 150, 50+ energy_bar_height *(1-mice_percentage), canvas_width-100, 50 + energy_bar_height,
+    canvas.create_rectangle(canvas_width - 150, 50+ energy_bar_height * (1-mice_percentage), canvas_width-100, 50 + energy_bar_height,
                             fill='green', outline='black')
+    canvas.create_image(canvas_width - 125, 150, image=mouse_image)  # Mouse image to the side of the bar
     
-                            
-    #Draw Wolf energy bar
-    canvas.create_rectangle(canvas_width - 150, 400, canvas_width-100, 400 + energy_bar_height,
+    # Draw wolf energy bar with title and image placeholder
+    canvas.create_text(canvas_width - 125, 330, text="Relative Wolf Population", font=('Arial', 16), fill='black')
+    canvas.create_rectangle(canvas_width - 150, 350, canvas_width-100, 350 + energy_bar_height,
                             fill='', outline='black')
-    canvas.create_rectangle(canvas_width - 150, 400+ energy_bar_height *(1-wolves_percentage), canvas_width-100, 400 + energy_bar_height,
+    canvas.create_rectangle(canvas_width - 150, 350 + energy_bar_height * (1-wolves_percentage), canvas_width-100, 350 + energy_bar_height,
                             fill='red', outline='black')
+    canvas.create_image(canvas_width - 125, 450, image=wolf_image)  # Wolf image to the side of the bar
+
     
 # Drawing the Grid
 def draw_grid():
@@ -359,9 +439,18 @@ def draw_grid():
                 
             elif isinstance(grid[i][j], Cheese):  # Draw cheese
                 canvas.create_image(j*cell_size, i*cell_size, anchor="nw", image=cheese_image)
-        canvas.create_line(0, i*cell_size, canvas_width-200, i*cell_size, fill='gray')  # Draw horizontal grid lines
-    for j in range(grid_width + 1):
-        canvas.create_line(j*cell_size, 0, j*cell_size, canvas_height, fill='gray')  # Draw vertical grid lines
+
+    if virus:
+        # Draw the 2x2 virus block as four little virus images
+        for pos in [(0, 0), (0, 1), (1, 0), (1, 1)]:
+            x, y = virus.position[0] + pos[0], virus.position[1] + pos[1]
+            canvas.create_image(y * cell_size, x * cell_size, anchor="nw", image=virus_image) 
+
+    # Draw grid lines last so they are on top of other elements
+    for i in range(grid_height):
+        canvas.create_line(0, i * cell_size, canvas_width - 200, i * cell_size, fill='gray') # Draw horizontal grid lines
+    for j in range(grid_width):
+        canvas.create_line(j * cell_size, 0, j * cell_size, canvas_height, fill='gray') # Draw vertical grid lines        
 
     draw_energy_bars()
 
