@@ -36,7 +36,7 @@ class ScriptLauncherApp:
         # Set a modern theme for ttk widgets
         style = ttk.Style()
         style.theme_use('clam')  # You can experiment with 'alt', 'default', 'classic', 'clam', etc.
-        style.configure('TNotebook.Tab', font=('Helvetica', 12), padding=[20, 10])
+        style.configure('TNotebook.Tab', font=('Helvetica', 18), padding=[30, 12], background='lightblue')  # Increased size and made background light blue
         style.configure('TButton', font=('Helvetica', 12), padding=10, relief='raised', background='lightblue')
         style.configure('TFrame', background='white')  # Ensure frames match tab backgrounds
         
