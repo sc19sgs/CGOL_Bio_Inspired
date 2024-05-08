@@ -165,18 +165,27 @@ def toggle_game():
 
 # Function to reset the game
 def reset_game():
-    global grid, is_game_active
+    global grid, is_game_active, final_count_mice, final_count_wolves
+    final_count_wolves = 0
+    final_count_mice = 0
+    
     is_game_active = False
     grid = np.full((grid_height, grid_width), None, dtype=object)
-    place_cheese(20)
+    place_cheese(5)
     draw_grid()
     game_button.config(text="Start Game")
 
 # Update Function for Game of Life Rules:
+final_count_mice = len(group_of_wolves.wolves)
+final_count_wolves = len(group_of_mice.mice)
 def update_grid():
-    global grid
+    global grid, is_game_active, virus
+    global final_count_mice, final_count_wolves
     if not is_game_active:
         return  
+    
+    final_count_mice = 0
+    final_count_wolves = 0
     new_grid = np.empty_like(grid, dtype=object)
     for i in range(grid_height):
         for j in range(grid_width):
@@ -232,6 +241,13 @@ def update_grid():
                     new_grid[i][j] = mouse  # Birth of a mouse, only if no wolves
                     group_of_mice.add_mouse(mouse)
                     group_of_mice.decrease_energy(birth_energy_loss)
+                    
+    for i in range(grid_height):
+        for j in range(grid_width):
+            if isinstance(new_grid[i][j], Mouse):
+                final_count_mice = final_count_mice+1 
+            elif isinstance(new_grid[i][j], Wolf):
+                final_count_wolves = final_count_wolves+1
 
     grid = new_grid
     draw_grid()
@@ -240,12 +256,12 @@ def update_grid():
         root.after(100, update_grid)
         
 def draw_energy_bars():
-    energy_bar_height = 300
-    
-    total_population = len(group_of_mice.mice) + len(group_of_wolves.wolves)
+    energy_bar_height = 200
+    global final_count_mice, final_count_wolves
+    total_population =  final_count_wolves + final_count_mice
     if total_population > 0:
-        mice_percentage = len(group_of_mice.mice) / total_population
-        wolves_percentage = len(group_of_wolves.wolves) / total_population
+        mice_percentage = final_count_mice / total_population
+        wolves_percentage = final_count_wolves / total_population
     else:
         mice_percentage = 0
         wolves_percentage = 0
@@ -311,13 +327,17 @@ def toggle_cell(event):
 def update_graph():
     # Add current counts to the lists
     if is_game_active:
-    
-        total = len(group_of_wolves.wolves) + len(group_of_mice.mice) + 5   #5 is the number of cheese always present on the grid
-        wolves_count_graph.append(len(group_of_wolves.wolves)) #Number of wolves.
-        mice_count_graph.append(len(group_of_mice.mice)) #Number of mice.
         
-        ratio_wolves.append(len(group_of_wolves.wolves)/total) #Ratio number of wolves / total
-        ratio_mice.append(len(group_of_mice.mice)/total) # Ration number of wolves / total
+        global final_count_mice, final_count_wolves
+    
+        print(final_count_wolves, " ", final_count_mice)
+        total = final_count_wolves + final_count_mice + 5   #5 is the number of cheese always present on the grid
+        wolves_count_graph.append(final_count_wolves) #Number of wolves.
+        mice_count_graph.append(final_count_mice) #Number of mice.
+    
+        
+        ratio_wolves.append(final_count_wolves/total) #Ratio number of wolves / total
+        ratio_mice.append(final_count_mice/total) # Ration number of wolves / total
         
         # Clear the previous plot
         plt.clf()

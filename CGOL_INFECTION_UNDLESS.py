@@ -221,7 +221,7 @@ def toggle_game():
         if cheese_count ==0:
             place_cheese(5)
             cheese_count += 5
-            print("cheese placed")
+            
         draw_grid()
         update_grid()
 
@@ -268,7 +268,9 @@ def corner_creation(type, new_grid):
         
 # Function to reset the game
 def reset_game():
-    global grid, is_game_active
+    global grid, is_game_active, final_count_mice, final_count_wolves
+    final_count_wolves = 0
+    final_count_mice = 0
     group_of_mice.reset()
     group_of_wolves.reset()
     is_game_active = False
@@ -279,9 +281,12 @@ def reset_game():
 
 virus = None  # Initial state without a virus
 
-
+final_count_mice = len(group_of_wolves.wolves)
+final_count_wolves = len(group_of_mice.mice)
 def update_grid():
     global grid, is_game_active, virus
+    global final_count_mice, final_count_wolves
+    
     
     if not root.winfo_exists():
         return
@@ -291,12 +296,12 @@ def update_grid():
         corner_creation("mouse", grid)
     elif len(group_of_wolves.wolves) == 0:
         corner_creation("wolf", grid)
-    
-
+        
+        
     # Population checks to possibly spawn or remove the virus
-    total_population = len(group_of_mice.mice) + len(group_of_wolves.wolves)
-    mice_percentage = len(group_of_mice.mice) / total_population if total_population > 0 else 0
-    wolves_percentage = len(group_of_wolves.wolves) / total_population if total_population > 0 else 0
+    total_population = final_count_mice + final_count_wolves
+    mice_percentage = final_count_mice / total_population if total_population > 0 else 0
+    wolves_percentage = final_count_wolves / total_population if total_population > 0 else 0
 
     # Decide if virus should be spawned or removed based on population thresholds
     if mice_percentage >= 0.7 and (virus is None or virus.target_species != 'mouse'):
@@ -307,6 +312,12 @@ def update_grid():
         virus.target_species = 'wolf'
     elif virus and mice_percentage < 0.7 and wolves_percentage < 0.7:
         virus = None
+        
+    final_count_mice = 0
+    final_count_wolves = 0
+        
+    
+
 
     new_grid = np.empty_like(grid, dtype=object)
 
@@ -321,10 +332,9 @@ def update_grid():
                     
                     total = np.sum([1 for cell in neighbours.flatten() if isinstance(cell, Mouse) or isinstance(cell, Wolf)]) - 1
                     if isinstance(grid[i][j], Mouse):
-                        print(i, " ", j, " :", count_mice)
-                        print(i, " ", j, " :", count_wolves)
                         if count_wolves == 3:
                             wolf = Wolf()
+                            group_of_mice.delete_mouse(grid[i][j])
                             new_grid[i][j] = wolf  # Mouse is replaced by wolves
                             group_of_wolves.add_wolf(wolf)
                             group_of_wolves.increase_energy(food_value)
@@ -382,7 +392,8 @@ def update_grid():
                     mouse = Mouse()
                     new_grid[i][j] = mouse
                     group_of_mice.add_mouse(mouse)
-                    group_of_mice.decrease_energy(birth_energy_loss)     
+                    group_of_mice.decrease_energy(birth_energy_loss)  
+                       
 
     # If virus exists, move and attack in a 2x2 block
     if virus:
@@ -399,12 +410,21 @@ def update_grid():
 
         # Move virus to a new random position within the grid bounds
         # virus.position = (random.randint(0, grid_height - 2), random.randint(0, grid_width - 2))
-        virus.move_and_attack()                                                        
+        virus.move_and_attack()   
+        
+    for i in range(grid_height):
+        for j in range(grid_width):
+            if isinstance(new_grid[i][j], Mouse):
+                final_count_mice = final_count_mice+1 
+            elif isinstance(new_grid[i][j], Wolf):
+                final_count_wolves = final_count_wolves+1
+                                                                 
 
     grid = new_grid
     draw_grid()
     # Commented out graph updates because it was making the process slower and less smooth  
     update_graph()
+    
     group_of_wolves.dead = 0
     group_of_mice.dead = 0
     if is_game_active:
@@ -412,11 +432,11 @@ def update_grid():
 
 def draw_energy_bars():
     energy_bar_height = 200
-    
-    total_population = len(group_of_mice.mice) + len(group_of_wolves.wolves)
+    global final_count_mice, final_count_wolves
+    total_population =  final_count_wolves + final_count_mice
     if total_population > 0:
-        mice_percentage = len(group_of_mice.mice) / total_population
-        wolves_percentage = len(group_of_wolves.wolves) / total_population
+        mice_percentage = final_count_mice / total_population
+        wolves_percentage = final_count_wolves / total_population
     else:
         mice_percentage = 0
         wolves_percentage = 0
@@ -496,16 +516,19 @@ def toggle_cell(event):
 def update_graph():
     # Add current counts to the lists
     if is_game_active:
+        
+        global final_count_mice, final_count_wolves
     
-        total = len(group_of_wolves.wolves) + len(group_of_mice.mice) + 5   #5 is the number of cheese always present on the grid
-        wolves_count_graph.append(len(group_of_wolves.wolves)) #Number of wolves.
-        mice_count_graph.append(len(group_of_mice.mice)) #Number of mice.
+        print(final_count_wolves, " ", final_count_mice)
+        total = final_count_wolves + final_count_mice + 5   #5 is the number of cheese always present on the grid
+        wolves_count_graph.append(final_count_wolves) #Number of wolves.
+        mice_count_graph.append(final_count_mice) #Number of mice.
         
         dead_wolves_count.append(group_of_wolves.dead) #Number of dead wolves.
         dead_mice_count.append(group_of_mice.dead) #Number of dead mice.
         
-        ratio_wolves.append(len(group_of_wolves.wolves)/total) #Ratio number of wolves / total
-        ratio_mice.append(len(group_of_mice.mice)/total) # Ration number of wolves / total
+        ratio_wolves.append(final_count_wolves/total) #Ratio number of wolves / total
+        ratio_mice.append(final_count_mice/total) # Ration number of wolves / total
         
         mice_energy.append(group_of_mice.energy) #Energy of the group of mice
         wolves_energy.append(group_of_wolves.energy) #Energy of the group of wolves
