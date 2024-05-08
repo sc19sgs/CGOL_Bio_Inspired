@@ -11,7 +11,7 @@ def run_script(script_name):
     """Run the specified Python script using the same Python interpreter as the current process."""
     try:
         # Run the Python script using the same kernel so that dependencies are met
-        subprocess.run([sys.executable, script_name], check=True)
+        subprocess.Popen([sys.executable, script_name])
     except subprocess.CalledProcessError as e:
         print(f"Error running script: {e}")
 
