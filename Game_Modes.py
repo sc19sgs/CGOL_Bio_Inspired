@@ -30,14 +30,14 @@ class ScriptLauncherApp:
         self.root = root
         self.root.title("Conway's Game of Life Modes")
         
-        # Full Screen window
-        self.root.attributes('-fullscreen', True)
+        # Set a fixed window size instead of full screen
+        self.root.geometry("1200x800")
         
         # Set a modern theme for ttk widgets
         style = ttk.Style()
         style.theme_use('clam')  # You can experiment with 'alt', 'default', 'classic', 'clam', etc.
-        style.configure('TNotebook.Tab', font=('Helvetica', 18), padding=[30, 12], background='lightblue')  # Increased size and made background light blue
-        style.configure('TButton', font=('Helvetica', 12), padding=10, relief='raised', background='lightblue')
+        style.configure('TNotebook.Tab', font=('Helvetica', 18), padding=[30, 12], background='lightblue')
+        style.configure('TButton', font=('Helvetica', 14), padding=[15, 8], relief='raised', background='#007BFF', foreground='white')  # Bright blue with larger font
         style.configure('TFrame', background='white')  # Ensure frames match tab backgrounds
         
         self.tab_control = ttk.Notebook(root)
@@ -58,7 +58,7 @@ class ScriptLauncherApp:
              "   - Mice eat cheese by being one block away, triggering a spawning pattern in the grid's corner.\n" + 
              "   - Wolves are rewarded for eating Mice by spawning wolves in the grid's corner.\n" + 
              "   - A relative population bar shows the population of each species."),
-            ("CGOL_INFECTION.py", "Conway's Game of Life (Infection)", "virus.png", 
+            ("CGOL_INFECTION_UNDLESS.py", "Conway's Game of Life (Infection)", "virus.png", 
              "• Enhances Predator vs Prey by adding a punishment mechanism:\n" +
             "\n"+
              "   - A virus/infection attacks when relative populations exceed 70%.\n" +
@@ -90,8 +90,8 @@ class ScriptLauncherApp:
         label.pack(side=tk.LEFT, padx=10)
         
         # Create a stylized button on the tab to run the script
-        button = ttk.Button(top_frame, text=button_text, 
-                            command=lambda: run_script(script_name))
+        button = ttk.Button(top_frame, text=f"Start {button_text}", 
+                            command=lambda: run_script(script_name), style='TButton')
         button.pack(side=tk.RIGHT, padx=10)
 
         # Create a text widget for game information with larger font and black text
