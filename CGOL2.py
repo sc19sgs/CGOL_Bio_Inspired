@@ -2,6 +2,8 @@ import tkinter as tk
 import numpy as np
 from PIL import Image, ImageTk
 import random
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 class GroupOfMice:
     def __init__(self):
@@ -233,30 +235,34 @@ def update_grid():
 
     grid = new_grid
     draw_grid()
+    update_graph()
     if is_game_active:
         root.after(100, update_grid)
         
 def draw_energy_bars():
     energy_bar_height = 300
     
+    total_population = len(group_of_mice.mice) + len(group_of_wolves.wolves)
+    if total_population > 0:
+        mice_percentage = len(group_of_mice.mice) / total_population
+        wolves_percentage = len(group_of_wolves.wolves) / total_population
+    else:
+        mice_percentage = 0
+        wolves_percentage = 0
+    
     # Draw mouse energy bar
     canvas.create_rectangle(canvas_width - 150, 50, canvas_width-100, 50 + energy_bar_height,
                             fill='', outline='black')
-    canvas.create_rectangle(canvas_width - 150, 50+ energy_bar_height *(1-group_of_mice.energy/100), canvas_width-100, 50 + energy_bar_height,
+    canvas.create_rectangle(canvas_width - 150, 50+ energy_bar_height *(1-mice_percentage), canvas_width-100, 50 + energy_bar_height,
                             fill='green', outline='black')
     
+                            
     #Draw Wolf energy bar
     canvas.create_rectangle(canvas_width - 150, 400, canvas_width-100, 400 + energy_bar_height,
                             fill='', outline='black')
-    canvas.create_rectangle(canvas_width - 150, 400+ energy_bar_height *(1-group_of_wolves.energy/100), canvas_width-100, 400 + energy_bar_height,
+    canvas.create_rectangle(canvas_width - 150, 400+ energy_bar_height *(1-wolves_percentage), canvas_width-100, 400 + energy_bar_height,
                             fill='red', outline='black')
     
-
-    
-
-
-    
-
 # Drawing the Grid
 def draw_grid():
     canvas.delete("all")
@@ -302,10 +308,79 @@ def toggle_cell(event):
         
     draw_grid()
 
+def update_graph():
+    # Add current counts to the lists
+    if is_game_active:
+    
+        total = len(group_of_wolves.wolves) + len(group_of_mice.mice) + 5   #5 is the number of cheese always present on the grid
+        wolves_count_graph.append(len(group_of_wolves.wolves)) #Number of wolves.
+        mice_count_graph.append(len(group_of_mice.mice)) #Number of mice.
+        
+        ratio_wolves.append(len(group_of_wolves.wolves)/total) #Ratio number of wolves / total
+        ratio_mice.append(len(group_of_mice.mice)/total) # Ration number of wolves / total
+        
+        # Clear the previous plot
+        plt.clf()
+        
+        plt.subplot(1, 2, 1)
+        plt.plot(wolves_count_graph, label='wolves')
+        plt.plot(mice_count_graph, label='mice')
+        plt.xlabel('Generation')
+        plt.ylabel('Count Alive')
+        plt.title('number of wolves and mice at each generation')
+        plt.legend()
+        """
+        plt.subplot(2, 2, 2)
+        plt.plot(dead_wolves_count, label='wolves')
+        plt.plot(dead_mice_count, label='mice')
+        plt.xlabel('Generation')
+        plt.ylabel('Count Dead')
+        plt.title('Number of dead wolves and mice at each generation')
+        plt.legend()"""
+        
+        plt.subplot(1, 2, 2)
+        plt.plot(ratio_wolves, label='wolves')
+        plt.plot(ratio_mice, label='mice')
+        plt.xlabel('Generation')
+        plt.ylabel('Ratio')
+        plt.title('Ratio Mice:Cheese:Wolves')
+        plt.legend()
+        """
+        plt.subplot(2, 2, 4)
+        plt.plot(wolves_energy, label='wolves')
+        plt.plot(mice_energy, label='mice')
+        plt.xlabel('Generation')
+        plt.ylabel('Energy')
+        plt.title('Mice and wolves energy over generations')
+        plt.legend()"""
+        
+        plt.tight_layout
+        plt.draw()
+        
+graph_window = tk.Toplevel(root)
+graph_window.title("Population Graph")
+graph_window.geometry("1200x900")
 
+#Lists to hold metric data
+wolves_count_graph = []
+mice_count_graph = []
+ratio_mice = []
+ratio_wolves = []
+
+
+fig, ax = plt.subplots()
+graph_canvas = FigureCanvasTkAgg(fig, master=graph_window)
+graph_canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
 
 
 
 canvas.bind("<Button-1>", toggle_cell)
+
+def on_closing():
+    global is_game_active
+    is_game_active = False
+    root.destroy()
+
+root.protocol("WM_DELETE_WINDOW", on_closing)
 
 root.mainloop()

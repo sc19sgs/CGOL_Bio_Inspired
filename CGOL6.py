@@ -228,7 +228,7 @@ def reset_game():
     group_of_wolves.reset()
     is_game_active = False
     grid = np.full((grid_height, grid_width), None, dtype=object)
-    place_cheese(20)
+    place_cheese(5)
     draw_grid()
     game_button.config(text="Start Game")
 
@@ -412,37 +412,37 @@ def update_graph():
         # Clear the previous plot
         plt.clf()
         
-        plt.subplot(2, 2, 1)
+        plt.subplot(1, 2, 1)
         plt.plot(wolves_count_graph, label='wolves')
         plt.plot(mice_count_graph, label='mice')
         plt.xlabel('Generation')
         plt.ylabel('Count Alive')
         plt.title('number of wolves and mice at each generation')
         plt.legend()
-        
+        """
         plt.subplot(2, 2, 2)
         plt.plot(dead_wolves_count, label='wolves')
         plt.plot(dead_mice_count, label='mice')
         plt.xlabel('Generation')
         plt.ylabel('Count Dead')
         plt.title('Number of dead wolves and mice at each generation')
-        plt.legend()
+        plt.legend()"""
         
-        plt.subplot(2, 2, 3)
+        plt.subplot(1, 2, 2)
         plt.plot(ratio_wolves, label='wolves')
         plt.plot(ratio_mice, label='mice')
         plt.xlabel('Generation')
         plt.ylabel('Ratio')
         plt.title('Ratio Mice:Cheese:Wolves')
         plt.legend()
-        
+        """
         plt.subplot(2, 2, 4)
         plt.plot(wolves_energy, label='wolves')
         plt.plot(mice_energy, label='mice')
         plt.xlabel('Generation')
         plt.ylabel('Energy')
         plt.title('Mice and wolves energy over generations')
-        plt.legend()
+        plt.legend()"""
         
         plt.tight_layout
         plt.draw()

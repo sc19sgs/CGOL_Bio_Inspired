@@ -287,6 +287,11 @@ def update_grid():
         return
     if not is_game_active:
         return
+    if len(group_of_mice.mice) == 0:
+        corner_creation("mouse", grid)
+    elif len(group_of_wolves.wolves) == 0:
+        corner_creation("wolf", grid)
+    
 
     # Population checks to possibly spawn or remove the virus
     total_population = len(group_of_mice.mice) + len(group_of_wolves.wolves)
