@@ -15,11 +15,15 @@ This project implements Conway's Game of Life (CGOL) integrated with Bio-Inspire
 - Tkinter
 
 ## Tutorial:
-1.) Run the CGOL.py script
+To run this program from a python virtual environment
+* Activate your [virtual environment](https://docs.python.org/3/tutorial/venv.html)
+* Run ```pip install -r requirements.txt``` to install the necessary dependencies
 
-2.) Place Mice (Prey) in grid and/or Wolves (Predators) using left-click and shift + left-click respectively
+* Run the ```python CGOL.py``` to start the application
 
-3.) Press "Start Game" and observe the simulation using our rules
+1. Place Mice (Prey) in grid and/or Wolves (Predators) using left-click and shift + left-click respectively
+
+2. Press "Start Game" and observe the simulation using our rules
 
 <img width="1425" alt="Screenshot 2024-04-16 at 20 11 37" src="https://github.com/sc19sgs/CGOL_Bio_Inspired/assets/100528174/6332a6e1-fd61-45a6-8eea-81b3924b2cf2">
 
