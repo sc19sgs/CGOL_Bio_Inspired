@@ -117,7 +117,7 @@ class Cheese:
     def __init__(self):
         self.type = 3  # Cheese type
 
-#Initialize the Cheese count and the groups of mice and wolves.
+# Initialisse the Cheese count and the groups of mice and wolves.
 cheese_count = 0
 group_of_wolves = GroupOfWolves()
 group_of_mice = GroupOfMice()
