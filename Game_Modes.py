@@ -14,6 +14,10 @@ from tkinter import ttk
 import subprocess
 import sys
 from PIL import Image, ImageTk
+import cv2
+import imageio
+from tkinter import Toplevel, Label
+
 
 # Global variable to keep track of any background task or subprocess
 update_task = None
@@ -35,6 +39,7 @@ def on_closing():
         update_task = None
     # Destroy the main window
     root.destroy()
+
 
 class ScriptLauncherApp:
     def __init__(self, root):
@@ -132,7 +137,7 @@ class ScriptLauncherApp:
         button.pack(side=tk.RIGHT, padx=10)
 
         # Create a text widget for game information with larger font and black text
-        info_text = tk.Text(tab, wrap=tk.WORD, height=8, bg='#f0f0f0', font=('Helvetica', 24), bd=0, fg='black')
+        info_text = tk.Text(tab, wrap=tk.WORD, height=8, bg='#f0f0f0', font=('Helvetica', 18), bd=0, fg='black')
         info_text.insert(tk.END, game_info)
         info_text.configure(state='disabled', relief='flat')  # Make it read-only and flat
         info_text.pack(pady=5, padx=20, fill=tk.BOTH, expand=True)
@@ -140,6 +145,52 @@ class ScriptLauncherApp:
         # Add the custom label with small image to the tab control
         self.tab_control.add(tab, text='', image=tab_photo, compound="left")
         self.tab_control.tab(tab, text=button_text, image=tab_photo, compound="left")  # Set the tab with the small image next to text
+        
+        # Check if this is the Predator vs Prey tab and add video if so
+        if script_name == "CGOL.py":
+            self.add_video_to_tab(tab, "Resources/CGOL1_DEMO.mp4")
+
+        if script_name == "CGOL_Reward.py":
+            self.add_video_to_tab(tab, "Resources/CGOL2_DEMO_FOODSUPPLY.mp4")
+
+        if script_name == "CGOL_INFECTION.py":
+            self.add_video_to_tab(tab, "Resources/CGOL3_VIRUS.mp4")   
+
+        if script_name == "CGOL_INFECTION_UNDLESS.py":
+            self.add_video_to_tab(tab, "Resources/CGOL4_ENDLESS.mp4")                        
+            
+          
+
+
+    def add_video_to_tab(self, tab, video_path):
+        # Create a label in the tab to hold the video, specify dimensions suitable for your video
+        video_label = Label(tab, bg='black', width=700, height=800)  # Width x Height, adjust as necessary
+        video_label.pack(pady=20, padx=20, fill=tk.BOTH, expand=True)
+
+        # Open the video file using OpenCV
+        video_cap = cv2.VideoCapture(video_path)
+
+        def update_frame():
+            ret, frame = video_cap.read()
+            if not ret:
+                # Restart the video if it ends
+                video_cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
+                ret, frame = video_cap.read()
+            
+            if ret:
+                # Convert the image to RGB (from BGR)
+                frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                # Resize frame to fit the label
+                frame = cv2.resize(frame, (700, 350))  # Ensure this matches the label size
+                # Convert to a format that tkinter can use
+                frame_image = Image.fromarray(frame)
+                frame_photo = ImageTk.PhotoImage(image=frame_image)
+                video_label.config(image=frame_photo)
+                video_label.image = frame_photo
+                video_label.after(50, update_frame)  # Adjust delay based on the video's actual framerate
+
+        update_frame()
+
 
 # Create the main window
 root = tk.Tk()

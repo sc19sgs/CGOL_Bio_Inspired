@@ -109,8 +109,8 @@ frame_style = {'bg': 'light grey'}
 text_style = {'bg': 'light grey', 'font': ('Arial', 18)}
 
 # Canvas Dimensions
-canvas_width = 1400 + 200
-canvas_height = 700
+canvas_width = 1400 
+canvas_height = 600
 cell_size = 28
 
 # Energy Bar Dimensions
@@ -360,18 +360,22 @@ def draw_energy_bars():
         mice_percentage = 0
         wolves_percentage = 0
     
-    # Draw mouse energy bar
+    # Draw mouse energy bar with title and image placeholder
+    canvas.create_text(canvas_width - 125, 30, text="Relative Mouse Population", font=('Arial', 16), fill='black')
     canvas.create_rectangle(canvas_width - 150, 50, canvas_width-100, 50 + energy_bar_height,
                             fill='', outline='black')
-    canvas.create_rectangle(canvas_width - 150, 50+ energy_bar_height *(1-mice_percentage), canvas_width-100, 50 + energy_bar_height,
+    canvas.create_rectangle(canvas_width - 150, 50+ energy_bar_height * (1-mice_percentage), canvas_width-100, 50 + energy_bar_height,
                             fill='green', outline='black')
+    canvas.create_image(canvas_width - 125, 150, image=mouse_image)  # Mouse image to the side of the bar
     
-                            
-    #Draw Wolf energy bar
-    canvas.create_rectangle(canvas_width - 150, 400, canvas_width-100, 400 + energy_bar_height,
+    # Draw wolf energy bar with title and image placeholder
+    canvas.create_text(canvas_width - 125, 330, text="Relative Wolf Population", font=('Arial', 16), fill='black')
+    canvas.create_rectangle(canvas_width - 150, 350, canvas_width-100, 350 + energy_bar_height,
                             fill='', outline='black')
-    canvas.create_rectangle(canvas_width - 150, 400+ energy_bar_height *(1-wolves_percentage), canvas_width-100, 400 + energy_bar_height,
+    canvas.create_rectangle(canvas_width - 150, 350 + energy_bar_height * (1-wolves_percentage), canvas_width-100, 350 + energy_bar_height,
                             fill='red', outline='black')
+    canvas.create_image(canvas_width - 125, 450, image=wolf_image)  # Wolf image to the side of the bar
+
     
 # Drawing the Grid
 def draw_grid():
