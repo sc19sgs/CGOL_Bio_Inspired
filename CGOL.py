@@ -32,12 +32,12 @@ grid_width = canvas_width // cell_size
 grid = np.zeros((grid_height, grid_width), dtype=int)
 
 # Import and Resize Images:
-mouse_image_path = "mouse.png"
+mouse_image_path = "Resources/mouse.png"
 mouse_original_image = Image.open(mouse_image_path)
 mouse_resized_image = mouse_original_image.resize((cell_size, cell_size), Image.Resampling.LANCZOS)
 mouse_image = ImageTk.PhotoImage(mouse_resized_image)
 
-wolf_image_path = "wolf.png"
+wolf_image_path = "Resources/wolf.png"
 wolf_original_image = Image.open(wolf_image_path)
 wolf_resized_image = wolf_original_image.resize((cell_size, cell_size), Image.Resampling.LANCZOS)
 wolf_image = ImageTk.PhotoImage(wolf_resized_image)

@@ -55,7 +55,7 @@ class ScriptLauncherApp:
         
         # Defined scripts and appropriate images
         game_modes = [
-            ("CGOL.py", "Conway's Game of Life (Predator vs Prey)", "wolf.png", "mouse.png",
+            ("CGOL.py", "Conway's Game of Life (Predator vs Prey)", "Resources/wolf.png", "Resources/mouse.png",
              "• Predators (Wolves) vs Mice (Prey)\n" + 
              "\n" +
              "   - Place mice by left-clicking on grid normally.\n" + 
@@ -63,7 +63,7 @@ class ScriptLauncherApp:
              "   - Both species replicate using Conway's Game of Life rules.\n" + 
              "   - Predators take precedence by being able to 'eat' the Mice and take priority in spawning."),
 
-            ("CGOL_Reward.py", "Conway's Game of Life (Food Supply)", "cheese.png", None,
+            ("CGOL_Reward.py", "Conway's Game of Life (Food Supply)", "Resources/cheese.png", None,
              "• Builds on Predator vs Prey with additional elements:\n" +
              "\n" +
              "   - Randomly placed food sources (Cheese) for the Mice.\n" + 
@@ -71,13 +71,13 @@ class ScriptLauncherApp:
              "   - Wolves are rewarded for eating Mice by spawning wolves in the grid's corner.\n" + 
              "   - A relative population bar shows the population of each species."),
 
-            ("CGOL_INFECTION.py", "Conway's Game of Life (Infection)", "virus.png", None,
+            ("CGOL_INFECTION.py", "Conway's Game of Life (Infection)", "Resources/virus.png", None,
              "• Enhances Predator vs Prey by adding a punishment mechanism:\n" +
              "\n" +
              "   - A virus/infection attacks when relative populations exceed 70%.\n" +
              "   - This prevents overpopulation and maintains balance."),
 
-            ("CGOL_INFECTION_UNDLESS.py", "Conway's Game of Life (Endless)", "infinity.png", None,
+            ("CGOL_INFECTION_UNDLESS.py", "Conway's Game of Life (Endless)", "Resources/infinity.png", None,
              "• Contains all previous adaptations, however introduces an endless cycle\n" +
              "\n" +
              "   - If the population of a species is fewer than 4, an appropriate moving pattern of 4 of that very species will spawn from the corner of the grid\n" +

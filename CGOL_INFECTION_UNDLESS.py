@@ -164,22 +164,22 @@ grid_width = (canvas_width-200) // cell_size
 grid = np.full((grid_height, grid_width), None, dtype=object)
 
 # Import and Resize Images:
-mouse_image_path = "mouse.png"
+mouse_image_path = "Resources/mouse.png"
 mouse_original_image = Image.open(mouse_image_path)
 mouse_resized_image = mouse_original_image.resize((cell_size, cell_size), Image.Resampling.LANCZOS)
 mouse_image = ImageTk.PhotoImage(mouse_resized_image)
 
-wolf_image_path = "wolf.png"
+wolf_image_path = "Resources/wolf.png"
 wolf_original_image = Image.open(wolf_image_path)
 wolf_resized_image = wolf_original_image.resize((cell_size, cell_size), Image.Resampling.LANCZOS)
 wolf_image = ImageTk.PhotoImage(wolf_resized_image)
 
-cheese_image_path = "cheese.png"
+cheese_image_path = "Resources/cheese.png"
 cheese_original_image = Image.open(cheese_image_path)
 cheese_resized_image = cheese_original_image.resize((cell_size, cell_size), Image.Resampling.LANCZOS)
 cheese_image = ImageTk.PhotoImage(cheese_resized_image)
 
-virus_image_path = "virus.png"
+virus_image_path = "Resources/virus.png"
 virus_original_image = Image.open(virus_image_path)
 virus_resized_image = virus_original_image.resize((cell_size, cell_size), Image.Resampling.LANCZOS)
 virus_image = ImageTk.PhotoImage(virus_resized_image)
