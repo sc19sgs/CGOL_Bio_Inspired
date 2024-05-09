@@ -42,7 +42,7 @@ To run this program from a python virtual environment
 * Activate your [virtual environment](https://docs.python.org/3/tutorial/venv.html)
 * Run ```pip install -r requirements.txt``` to install the necessary dependencies
 
-* Run ```python Game_Mode.py``` to start the application and choose your Game Mode
+* Run ```python Game_Modes.py``` to start the application and choose your Game Mode
 
 * Basic Instructions:
 
