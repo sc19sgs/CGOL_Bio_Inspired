@@ -1,3 +1,7 @@
+"""
+Final game mode, where an endless stream of species are introduced, should a species be underpopulated (<4)
+"""
+
 import tkinter as tk
 import numpy as np
 from PIL import Image, ImageTk
@@ -323,6 +327,11 @@ def update_grid():
 
     for i in range(grid_height):
         for j in range(grid_width):
+            # Makes 3x3 array for and allows for continuity in the grid from left-right & top-bottom:
+            # Top-left:     (i-1, j-1)   |  Top:     (i-1, j)   |  Top-right:     (i-1, j+1)
+            # Middle-left:  (i, j-1)     |  Center:  (i, j)     |  Middle-right:  (i, j+1)
+            # Bottom-left:  (i+1, j-1)   |  Bottom:  (i+1, j)   |  Bottom-right:  (i+1, j+1)
+                        
             neighbours = grid[np.ix_([(i-1) % grid_height, i, (i+1) % grid_height], 
                                      [(j-1) % grid_width, j, (j+1) % grid_width])]
             count_mice = np.sum([1 for cell in neighbours.flatten() if isinstance(cell, Mouse)])
