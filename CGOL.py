@@ -1,3 +1,9 @@
+"""
+Conway's Game of Life rules implemented within two species Mice (Prey) and Wolves (Predator). 
+Species can only replicate with the rules within themselves, however Wolves can 'eat' Mice square
+and also the Predator birth takes precedence over the Prey births.
+"""
+
 import tkinter as tk
 import numpy as np
 from PIL import Image, ImageTk
@@ -111,12 +117,23 @@ def update_grid():
     new_grid = np.zeros_like(grid)
     for i in range(grid_height):
         for j in range(grid_width):
-            neighbours = grid[max(i-1, 0):min(i+2, grid_height), max(j-1, 0):min(j+2, grid_width)]
+
+            # Makes 3x3 array for and allows for continuity in the grid from left-right & top-bottom:
+            # Top-left:     (i-1, j-1)   |  Top:     (i-1, j)   |  Top-right:     (i-1, j+1)
+            # Middle-left:  (i, j-1)     |  Center:  (i, j)     |  Middle-right:  (i, j+1)
+            # Bottom-left:  (i+1, j-1)   |  Bottom:  (i+1, j)   |  Bottom-right:  (i+1, j+1)
+
+            neighbours = grid[np.ix_([(i-1) % grid_height, i, (i+1) % grid_height], 
+                                     [(j-1) % grid_width, j, (j+1) % grid_width])]    
+                    
             count_mice = np.sum(neighbours == 1)
             count_wolves = np.sum(neighbours == 2)
             
             if grid[i][j] != 0:
                 # Apply survival rules
+                # This counts the sum of how many neighbours share the same entity as the concerned square 
+                # It subtracts the one occasion where the concerned square itself also has that entity
+                # Shown as (grid[i][j] != 0) instead of simply 1 so we can understand better 
                 total = np.sum(neighbours == grid[i][j]) - (grid[i][j] != 0)
                 if total in [2, 3]:
                     # Cell survives; if it's a mouse and surrounded by 3 wolves, it becomes a wolf

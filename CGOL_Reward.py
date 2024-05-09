@@ -1,3 +1,10 @@
+"""
+Food Supply for Mouse is added (Cheese). Predator and Prey mechanics remain the same
+however now the Predator is rewarded for eating the Prey and the Prey is rewarded for eating the Cheese
+by causing a moving pattern of the appropriate species to spawn from the corner of the grid
+"""
+
+
 import tkinter as tk
 import numpy as np
 from PIL import Image, ImageTk
@@ -5,10 +12,14 @@ import random
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
+
+
+
 class GroupOfMice:
     def __init__(self):
         self.energy = 50  # Common energy for all mice
         self.mice = []
+        self.dead = 0
 
     def add_mouse(self, mouse):
         self.mice.append(mouse)
@@ -16,6 +27,7 @@ class GroupOfMice:
     def delete_mouse(self, mouse):
         if mouse in self.mice:
             self.mice.remove(mouse)
+            self.dead = self.dead+1
 
     def increase_energy(self, amount):
         self.energy += amount
@@ -24,11 +36,16 @@ class GroupOfMice:
         self.energy -= amount
         if self.energy < 0:
             self.energy = 0
+            
+    def reset(self):
+        self.mice = []
+        self.dead = 0
 
 class GroupOfWolves:
     def __init__(self):
         self.energy = 80  # Common energy for all wolves
         self.wolves = []
+        self.dead = 0
 
     def add_wolf(self, wolf):
         self.wolves.append(wolf)
@@ -36,6 +53,7 @@ class GroupOfWolves:
     def delete_wolf(self, wolf):
         if wolf in self.wolves:
             self.wolves.remove(wolf)
+            self.dead = self.dead+1
     
     def increase_energy(self, amount):
         self.energy += amount
@@ -44,6 +62,11 @@ class GroupOfWolves:
         self.energy -= amount
         if self.energy < 0:
             self.energy = 0
+    
+    def reset(self):
+        self.wolves = []
+        self.dead = 0
+        
                       
 class Mouse:
     def __init__(self):
@@ -63,6 +86,8 @@ group_of_wolves = GroupOfWolves()
 group_of_mice = GroupOfMice()
 food_value = 10
 birth_energy_loss = 0.2
+
+
 
 def place_cheese(num_cheese):
     for _ in range(num_cheese):
@@ -163,24 +188,67 @@ def toggle_game():
         update_grid()
 
 
+def corner_creation(type, new_grid):
+    if type == "mouse":
+        
+        mouse = Mouse()
+        mouse1 = Mouse()
+        mouse2 = Mouse()
+        mouse3 = Mouse()
+        mouse4 = Mouse()
+        
+        group_of_mice.add_mouse(mouse)
+        group_of_mice.add_mouse(mouse1)
+        group_of_mice.add_mouse(mouse2)
+        group_of_mice.add_mouse(mouse3)
+        group_of_mice.add_mouse(mouse4)
+        
+        new_grid[0][2] = mouse1
+        new_grid[1][2] = mouse2
+        new_grid[2][2] = mouse3
+        new_grid[2][1] = mouse4
+        new_grid[1][0] = mouse
+              
+    elif type == "wolf":
+        wolf = Wolf()
+        wolf1 = Wolf()
+        wolf2 = Wolf()
+        wolf3 = Wolf()
+        wolf4 = Wolf()
+        
+        group_of_wolves.add_wolf(wolf)
+        group_of_wolves.add_wolf(wolf1)
+        group_of_wolves.add_wolf(wolf2)
+        group_of_wolves.add_wolf(wolf3)
+        group_of_wolves.add_wolf(wolf4)
+        
+        new_grid[0][grid_width-3] = wolf
+        new_grid[1][grid_width-3] = wolf1
+        new_grid[2][grid_width-3] = wolf2
+        new_grid[1][grid_width-1] = wolf3
+        new_grid[2][grid_width-2] = wolf4
+        
 # Function to reset the game
 def reset_game():
     global grid, is_game_active, final_count_mice, final_count_wolves
     final_count_wolves = 0
     final_count_mice = 0
-    
+    group_of_mice.reset()
+    group_of_wolves.reset()
     is_game_active = False
     grid = np.full((grid_height, grid_width), None, dtype=object)
     place_cheese(5)
     draw_grid()
     game_button.config(text="Start Game")
 
-# Update Function for Game of Life Rules:
 final_count_mice = len(group_of_wolves.wolves)
 final_count_wolves = len(group_of_mice.mice)
+# Update Function for Game of Life Rules:
 def update_grid():
     global grid, is_game_active, virus
     global final_count_mice, final_count_wolves
+    
+    
     if not is_game_active:
         return  
     
@@ -189,69 +257,95 @@ def update_grid():
     new_grid = np.empty_like(grid, dtype=object)
     for i in range(grid_height):
         for j in range(grid_width):
-            neighbours = grid[max(i-1, 0):min(i+2, grid_height), max(j-1, 0):min(j+2, grid_width)]
+            # Makes 3x3 array for and allows for continuity in the grid from left-right & top-bottom:
+            # Top-left:     (i-1, j-1)   |  Top:     (i-1, j)   |  Top-right:     (i-1, j+1)
+            # Middle-left:  (i, j-1)     |  Center:  (i, j)     |  Middle-right:  (i, j+1)
+            # Bottom-left:  (i+1, j-1)   |  Bottom:  (i+1, j)   |  Bottom-right:  (i+1, j+1)
+                        
+            neighbours = grid[np.ix_([(i-1) % grid_height, i, (i+1) % grid_height], 
+                                     [(j-1) % grid_width, j, (j+1) % grid_width])]
+            
             count_mice = np.sum([1 for cell in neighbours.flatten() if isinstance(cell, Mouse)])
             count_wolves = np.sum([1 for cell in neighbours.flatten() if isinstance(cell, Wolf)])
             
-            if isinstance(grid[i][j], Mouse):
-                # Apply survival rules
-                total = np.sum([1 for cell in neighbours.flatten() if isinstance(cell, Mouse) or isinstance(cell, Wolf)]) - 1
-                if total in [2, 3]:
-                    # Cell survives; if it's a mouse and surrounded by 3 wolves, it becomes a wolf
-                    if count_wolves == 3:
-                        wolf = Wolf()
-                        new_grid[i][j] = wolf  # Mouse is replaced by wolves
-                        group_of_wolves.add_wolf(wolf)
-                        group_of_wolves.increase_energy(food_value)
-                    else:
-                        new_grid[i][j] = grid[i][j]
-                else:
-                    new_grid[i][j] = None  # Cell dies
-            elif isinstance(grid[i][j], Wolf):
-                # Apply survival rules for wolf
-                total = np.sum([1 for cell in neighbours.flatten() if isinstance(cell, Mouse) or isinstance(cell, Wolf)]) - 1
-                if total in [2, 3]:
-                    new_grid[i][j] = grid[i][j]  # Wolf survives
-                else:
-                    new_grid[i][j] = None  # Wolf dies
-            elif isinstance(grid[i][j], Cheese):
-                if count_mice > 0:
-                    new_x = random.randint(0, grid_width - 1)
-                    new_y = random.randint(0, grid_height - 1)
-                    while grid[new_y][new_x] is not None:  # Ensure the cell is empty before respawning
-                        new_x = random.randint(0, grid_width - 1)
-                        new_y = random.randint(0, grid_height - 1)
-                    new_grid[new_y][new_x] = Cheese()
-                    mouse = Mouse()
-                    new_grid[i][j] = mouse # Mouse eats the cheese
-                    group_of_mice.add_mouse(mouse)
-                    group_of_mice.increase_energy(food_value)
+            
+            if grid[i][j]!=None:
                     
-                else:
-                    new_grid[i][j] = Cheese()
-            else:
-                # Apply birth rules
+                    total = np.sum([1 for cell in neighbours.flatten() if isinstance(cell, Mouse) or isinstance(cell, Wolf)]) - 1
+                    if isinstance(grid[i][j], Mouse):
+                        print(i, " ", j, " :", count_mice)
+                        print(i, " ", j, " :", count_wolves)
+                        if count_wolves == 3:
+                            wolf = Wolf()
+                            new_grid[i][j] = wolf  # Mouse is replaced by wolves
+                            group_of_wolves.add_wolf(wolf)
+                            group_of_wolves.increase_energy(food_value)
+                            corner_creation("wolf", new_grid)
+                        elif count_mice == 4 or count_mice == 3:
+                            new_grid[i][j] = grid[i][j]
+                        elif count_mice not in [4, 3]:
+                            group_of_mice.delete_mouse(grid[i][j])
+                            new_grid[i][j] = None
+                    elif isinstance(grid[i][j], Wolf):
+                        if count_wolves in [3, 4]:
+                            new_grid[i][j] = grid[i][j]
+                        elif count_wolves not in [3, 4]:
+                            group_of_wolves.delete_wolf(grid[i][j])
+                            new_grid[i][j] = None
+                        
+                    elif isinstance(grid[i][j], Cheese):
+                        if (count_mice > 0 and count_wolves ==3) or count_wolves == 3:
+                            wolf = Wolf()
+                            new_grid[i][j] = wolf
+                            new_x = random.randint(0, grid_width - 1)
+                            new_y = random.randint(0, grid_height - 1)
+                            while grid[new_y][new_x] is not None:  # Ensure the cell is empty before respawning
+                                new_x = random.randint(0, grid_width - 1)
+                                new_y = random.randint(0, grid_height - 1)
+                            new_grid[new_y][new_x] = Cheese()
+                            
+                            
+                        elif count_mice > 0:
+                                new_x = random.randint(0, grid_width - 1)
+                                new_y = random.randint(0, grid_height - 1)
+                                while grid[new_y][new_x] is not None:  # Ensure the cell is empty before respawning
+                                    new_x = random.randint(0, grid_width - 1)
+                                    new_y = random.randint(0, grid_height - 1)
+                                new_grid[new_y][new_x] = Cheese()
+                                mouse = Mouse()
+                                new_grid[i][j] = mouse # Mouse eats the cheese
+                                group_of_mice.add_mouse(mouse)
+                                group_of_mice.increase_energy(food_value)
+
+                                corner_creation("mouse", new_grid) 
+                        else:
+                                new_grid[i][j] = Cheese()
+                    else: 
+                        new_grid[i][j] = grid[i][j]
+            else: 
                 if count_wolves == 3:
-                    wolf  = Wolf()
-                    new_grid[i][j] = wolf  # Birth of a wolf takes precedence
+                    wolf = Wolf()
+                    new_grid[i][j] = wolf
                     group_of_wolves.add_wolf(wolf)
                     group_of_wolves.decrease_energy(birth_energy_loss)
                 elif count_mice == 3:
                     mouse = Mouse()
-                    new_grid[i][j] = mouse  # Birth of a mouse, only if no wolves
+                    new_grid[i][j] = mouse
                     group_of_mice.add_mouse(mouse)
-                    group_of_mice.decrease_energy(birth_energy_loss)
-                    
+                    group_of_mice.decrease_energy(birth_energy_loss)      
+                            
     for i in range(grid_height):
         for j in range(grid_width):
             if isinstance(new_grid[i][j], Mouse):
                 final_count_mice = final_count_mice+1 
             elif isinstance(new_grid[i][j], Wolf):
-                final_count_wolves = final_count_wolves+1
+                final_count_wolves = final_count_wolves+1  
 
     grid = new_grid
     draw_grid()
     update_graph()
+    group_of_wolves.dead = 0
+    group_of_mice.dead = 0
     if is_game_active:
         root.after(100, update_grid)
         
@@ -323,7 +417,8 @@ def toggle_cell(event):
             grid[y][x] = None
         
     draw_grid()
-
+    
+    
 def update_graph():
     # Add current counts to the lists
     if is_game_active:
@@ -334,10 +429,15 @@ def update_graph():
         total = final_count_wolves + final_count_mice + 5   #5 is the number of cheese always present on the grid
         wolves_count_graph.append(final_count_wolves) #Number of wolves.
         mice_count_graph.append(final_count_mice) #Number of mice.
-    
+        
+        dead_wolves_count.append(group_of_wolves.dead) #Number of dead wolves.
+        dead_mice_count.append(group_of_mice.dead) #Number of dead mice.
         
         ratio_wolves.append(final_count_wolves/total) #Ratio number of wolves / total
         ratio_mice.append(final_count_mice/total) # Ration number of wolves / total
+        
+        mice_energy.append(group_of_mice.energy) #Energy of the group of mice
+        wolves_energy.append(group_of_wolves.energy) #Energy of the group of wolves
         
         # Clear the previous plot
         plt.clf()
@@ -384,9 +484,12 @@ graph_window.geometry("1200x900")
 #Lists to hold metric data
 wolves_count_graph = []
 mice_count_graph = []
+dead_wolves_count = []
+dead_mice_count = []
 ratio_mice = []
 ratio_wolves = []
-
+mice_energy = []
+wolves_energy = []
 
 fig, ax = plt.subplots()
 graph_canvas = FigureCanvasTkAgg(fig, master=graph_window)
@@ -395,12 +498,5 @@ graph_canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
 
 
 canvas.bind("<Button-1>", toggle_cell)
-
-def on_closing():
-    global is_game_active
-    is_game_active = False
-    root.destroy()
-
-root.protocol("WM_DELETE_WINDOW", on_closing)
 
 root.mainloop()
